@@ -1,5 +1,6 @@
 ## An official implementation of "TTA-Nav: Test-time Adaptive Reconstruction for Point-Goal Navigation under Visual Corruptions"
 Read the preprint version at: https://arxiv.org/abs/2403.01977
+Project page (including demos): https://sites.google.com/view/tta-nav
 
 
 ## Requirements
