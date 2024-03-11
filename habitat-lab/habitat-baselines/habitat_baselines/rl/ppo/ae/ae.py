@@ -4,8 +4,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-import resnetbn as resnet
+from . import resnetbn as resnet
 
 def parse_layer_string(s):
     layers = []
@@ -223,18 +222,11 @@ if __name__ == "__main__":
         dec_block_config_str,
         dec_channel_config_str,
     )
-    encoder = ae.enc
-    block = "4"
-    encoder_block = getattr(encoder.backbone, f"layer{block}")
-    for m in encoder_block.modules():
-        if isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
-            print("train", m)
-            m.train()
-    # checkpoint =  torch.load('/mnt/iusers01/fatpou01/compsci01/n70579mp/split-diffuse-vae/pretrained_models/se_resneXt50_pointnav.pt')
+    checkpoint =  torch.load('/mnt/iusers01/fatpou01/compsci01/n70579mp/split-diffuse-vae/pretrained_models/se_resneXt50_pointnav.pt')
     # print("all keys", checkpoint.keys())
-    # ae.enc.load_state_dict(checkpoint, strict=False)
-    # print("SUCCESFULLY LOADED")
-    # sample = torch.randn(1, 3, 256, 256)
-    # out = ae.training_step(sample, 0)
-    # print(ae)
-    # print(out.shape)
+    ae.enc.load_state_dict(checkpoint, strict=False)
+    print("SUCCESFULLY LOADED")
+    sample = torch.randn(1, 3, 256, 256)
+    out = ae.training_step(sample, 0)
+    print(ae)
+    print(out.shape)

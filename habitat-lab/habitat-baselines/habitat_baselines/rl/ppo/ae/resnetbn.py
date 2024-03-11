@@ -193,7 +193,7 @@ class ResNeXtBottleneck(Bottleneck):
 Block = Union[Type[Bottleneck], Type[BasicBlock]]
 
 
-class ResNet(nn.Module):
+class ResNetEarlyLayers(nn.Module):
     def __init__(
         self,
         in_channels: int,
@@ -203,7 +203,7 @@ class ResNet(nn.Module):
         layers: List[int],
         cardinality: int = 1,
     ) -> None:
-        super(ResNet, self).__init__()
+        super(ResNetEarlyLayers, self).__init__()
         self.conv1 = nn.Sequential(
             nn.Conv2d(
                 in_channels,
@@ -230,9 +230,9 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(
             block, ngroups, base_planes * 2 * 2, layers[2], stride=2
         )
-        self.layer4 = self._make_layer(
-            block, ngroups, base_planes * 2 * 2 * 2, layers[3], stride=2
-        )
+        # self.layer4 = self._make_layer(
+        #     block, ngroups, base_planes * 2 * 2 * 2, layers[3], stride=2
+        # )
 
         self.final_channels = self.inplanes
         self.final_spatial_compress = 1.0 / (2**5)
@@ -276,64 +276,18 @@ class ResNet(nn.Module):
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
-        x = self.layer4(x)
+        # x = self.layer4(x)
 
         return x
 
 
-def resnet18(in_channels, base_planes, ngroups):
-    model = ResNet(in_channels, base_planes, ngroups, BasicBlock, [2, 2, 2, 2])
-
-    return model
-
-
-def resnet50(in_channels: int, base_planes: int, ngroups: int) -> ResNet:
-    model = ResNet(in_channels, base_planes, ngroups, Bottleneck, [3, 4, 6, 3])
-
-    return model
-
-
-def resneXt50(in_channels, base_planes, ngroups):
-    model = ResNet(
-        in_channels,
-        base_planes,
-        ngroups,
-        ResNeXtBottleneck,
-        [3, 4, 6, 3],
-        cardinality=int(base_planes / 2),
-    )
-
-    return model
-
-
-def se_resnet50(in_channels, base_planes, ngroups):
-    model = ResNet(
-        in_channels, base_planes, ngroups, SEBottleneck, [3, 4, 6, 3]
-    )
-
-    return model
-
-
 def se_resneXt50(in_channels, base_planes, ngroups):
-    model = ResNet(
+    model = ResNetEarlyLayers(
         in_channels,
         base_planes,
         ngroups,
         SEResNeXtBottleneck,
-        [3, 4, 6, 3],
-        cardinality=int(base_planes / 2),
-    )
-
-    return model
-
-
-def se_resneXt101(in_channels, base_planes, ngroups):
-    model = ResNet(
-        in_channels,
-        base_planes,
-        ngroups,
-        SEResNeXtBottleneck,
-        [3, 4, 23, 3],
+        [3, 4, 6],
         cardinality=int(base_planes / 2),
     )
 

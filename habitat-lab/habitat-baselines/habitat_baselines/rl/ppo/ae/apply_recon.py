@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .nav_vae_3rd import AE
+from .ae import AE
 import numpy as np
-# from nav_vae_3rd import AE
 
 class apply_ae():
     def __init__(self, device, adapt_encoder, apply_ablation=False, ablation_block=None):
