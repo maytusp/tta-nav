@@ -1,0 +1,93 @@
+# @package _global_
+
+defaults:
+  - /benchmark/nav/pointnav: pointnav_gibson_rgb
+  - /habitat_baselines: habitat_baselines_rl_config_base
+  - _self_
+robustness:
+  apply_corruptions: True
+  visual_corruption: "Light Out" # Defocus Blur, Motion Blur, Lighting, Spatter, Speckle Noise
+  # Albumentations: Jitter, Glare, light Out
+  visual_severity: 5
+adaptation:
+  adaptation_phase: True
+  adaptation_method: "dua" # reward, dua, tent, shot, vitta
+  train_policy: False
+  dua:
+    decay_factor: 0.94
+    min_mom: 0.005
+    adapt_steps: 16
+ablation:
+  run: True
+  block: "4"
+habitat_baselines:
+  verbose: False
+  trainer_name: "ppo"
+  torch_gpu_id: 0
+  tensorboard_dir: "tb/ablation/dua_b4/light_out"
+  video_dir: "../scratch/videos/ablation/dua_b4/light_out"
+  test_episode_count: -1
+  eval_ckpt_path_dir: "data/checkpoints/se_resnext50.pth"
+  num_environments: 1
+  checkpoint_folder: ""
+  num_updates: -1
+  total_num_steps: 1e8
+  log_interval: 10
+  num_checkpoints: 25
+  # Force PyTorch to be single threaded as
+  # this improves performance considerably
+  force_torch_single_threaded: True
+  eval:
+    # video_option: [ "disk"]
+    split: "val"
+  rl:
+    policy:
+      main_agent:
+        name: "PointNavResNetPolicy"
+
+    ppo:
+      # ppo params
+      clip_param: 0.2
+      ppo_epoch: 2
+      num_mini_batch: 1
+      value_loss_coef: 0.5
+      entropy_coef: 0.01
+      lr: 2.5e-4
+      eps: 1e-5
+      max_grad_norm: 0.2
+      num_steps: 128
+      use_gae: True
+      gamma: 0.99
+      tau: 0.95
+      use_linear_clip_decay: False
+      use_linear_lr_decay: False
+      reward_window_size: 50
+
+      use_normalized_advantage: False
+
+      hidden_size: 512
+
+      # Use double buffered sampling, typically helps
+      # when environment time is similar or larger than
+      # policy inference time during rollout generation
+      use_double_buffered_sampler: False
+
+    ddppo:
+      sync_frac: 0.6
+      # The PyTorch distributed backend to use
+      distrib_backend: NCCL
+      # Visual encoder backbone
+      pretrained_weights: data/ddppo-models/gibson-2plus-se-resneXt50-rgb.pth
+      # Initialize with pretrained weights
+      pretrained: True
+      # Initialize just the visual encoder backbone with pretrained weights
+      pretrained_encoder: False
+      # Whether the visual encoder backbone will be trained.
+      train_encoder: True
+      # Whether to reset the critic linear layer
+      reset_critic: False
+
+      # Model parameters
+      backbone: se_resneXt50
+      rnn_type: LSTM
+      num_recurrent_layers: 2

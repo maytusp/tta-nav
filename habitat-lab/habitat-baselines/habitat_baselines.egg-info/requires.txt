@@ -1,0 +1,10 @@
+protobuf==3.20.1
+ifcfg
+moviepy>=1.0.1
+faster_fifo>=1.4.2
+torchvision
+lmdb>=0.98
+tensorboard==2.8.0
+threadpoolctl>=3.1.0
+torch>=1.3.1
+webdataset==0.1.40

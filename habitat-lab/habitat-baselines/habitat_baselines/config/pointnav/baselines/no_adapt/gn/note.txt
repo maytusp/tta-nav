@@ -1,0 +1,1 @@
+This one is for the original model (visual encoder + policy) that is trained using 2.5 B frames.

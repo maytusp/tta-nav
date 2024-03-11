@@ -1,0 +1,2 @@
+This one is finetuned from the original model using BatchNorm instead of GroupNorm on 100M frames.
+The original one is trained using GroupNorm with 2.5 B frames.
