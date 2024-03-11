@@ -48,7 +48,7 @@ We only have to modify [habitat_evaluator.py](https://github.com/maytusp/tta-nav
 
 ## Checkpoints
 1. The main agent: [DD-PPO (BatchNorm version)](https://drive.google.com/file/d/10CBT_N6vXyw_g8I0uG5pIRvlb9UgDFwy/view?usp=share_link)
-2. Top-down Decoder: [Autoencoder]()
+2. Top-down Decoder: [ae_gibson.pt](https://drive.google.com/file/d/1YBVLmCUJ8UmJafGzh3kovenudGcUlCKH/view?usp=share_link)
 
 ## Checkpoints
 Any inquiry can be made via maytusp [at] gmail [dot] com
