@@ -53,4 +53,13 @@ We only have to modify [habitat_evaluator.py](https://github.com/maytusp/tta-nav
 ## Checkpoints
 Any inquiry can be made via maytusp [at] gmail [dot] com
 
-
+## Cite
+If you find our project useful, please cite us by
+```
+@article{piriyajitakonkij2024tta,
+  title={TTA-Nav: Test-time Adaptive Reconstruction for Point-Goal Navigation under Visual Corruptions},
+  author={Piriyajitakonkij, Maytus and Sun, Mingfei and Zhang, Mengmi and Pan, Wei},
+  journal={arXiv preprint arXiv:2403.01977},
+  year={2024}
+}
+```
