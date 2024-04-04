@@ -41,11 +41,12 @@ class apply_ae():
                                                                                             self.min_mom)
         observation = observation / 255.0
         x = torch.from_numpy(observation).permute(2, 0, 1).float().unsqueeze(dim=0).to(self.device)
+        _ = self.model(x) # To update running statistics
+        self.model.eval() # To use running statistics in normalization
         decoder_out = self.model(x)
         decoder_out = decoder_out.squeeze().permute(1, 2, 0)
         decoder_out = decoder_out.cpu().detach().numpy()
         decoder_out = (decoder_out*255).clip(0, 255).astype(np.uint8)
-        self.model.eval()
         return decoder_out
 
     def _adapt(self, 

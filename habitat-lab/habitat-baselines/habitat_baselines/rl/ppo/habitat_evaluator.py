@@ -56,19 +56,26 @@ class HabitatEvaluator(Evaluator):
         apply_corruptions = config.robustness.apply_corruptions
         try: # Each observation comes from the decoder output instead
             apply_recon = config.recon.apply_recon
-            self.apply_ablation = config.ablation.run
         except:
             apply_recon = False
-            self.apply_ablation = False
+            
+        try:
+            aae_path = config.recon.aae_path
+        except:
+            aae_path = None
 
-        if self.apply_ablation:
-            self.ablation_block = config.ablation.block
 
+        self.apply_ablation = False #TODO config.ablation.run
+        self.ablation_block = None #TODO config.ablation.block
+
+
+        # self.apply_ablation = False
+        # self.ablation_block = None
         if apply_recon:
             print(f"Apply Recon {apply_recon}")
-            print(f"Apply Ablation {self.apply_ablation} on block {self.ablation_block}")
-            adapt_encoder = config.recon.adapt_encoder
-            self.ae_recon = apply_ae(device, adapt_encoder, self.apply_ablation, self.ablation_block)
+            # print(f"Apply Ablation {self.apply_ablation} on block {self.ablation_block}")
+            adapt = config.recon.adapt_encoder
+            self.ae_recon = apply_ae(device, adapt, self.apply_ablation, self.ablation_block, aae_path)
 
 
         if apply_corruptions:
@@ -84,6 +91,8 @@ class HabitatEvaluator(Evaluator):
         if apply_corruptions:
             for i in range(len(observations)):
                 temp = self.my_benchmark.corrupt_rgb_observation(observations[i]["rgb"])
+                print("real", observations[i]["rgb"].shape)
+                print("corrupted", temp.shape)
                 if len(temp.shape) == len(observations[i]["rgb"].shape): # For motion blur
                     if apply_recon:
                         temp = self.ae_recon.recon(temp)
@@ -91,7 +100,9 @@ class HabitatEvaluator(Evaluator):
                     observations[i]["rgb"] = temp
                 else:
                     print("Motion blur images error with shape", temp.shape)
-
+        if "vit" in config.habitat_baselines.rl.ddppo.backbone: # Check image size for ViT
+            observations = check_size_for_vit(observations, 224)
+            
         batch = batch_obs(observations, device=device)
         batch = apply_obs_transforms_batch(batch, obs_transforms)  # type: ignore
 
@@ -182,9 +193,7 @@ class HabitatEvaluator(Evaluator):
             #     agent, mom_pre, decay_factor, min_mom = self._adapt_ablation(agent, mom_pre, decay_factor, min_mom)                
                 # if len(stats_episodes):
                 #     print(f"apply abaltion on:{self.ablation_block}")
-            if config.adaptation.adaptation_phase and config.adaptation.adaptation_method == "dua":
-                assert n_agents == 1
-                agent, mom_pre, decay_factor, min_mom = self._adapt(agent, mom_pre, decay_factor, min_mom)
+
 
             current_episodes_info = envs.current_episodes()
 
@@ -195,6 +204,25 @@ class HabitatEvaluator(Evaluator):
                     "index_len_prev_actions": action_space_lens,
                 }
             with inference_mode():
+                # Use DUA
+                if config.adaptation.adaptation_phase and config.adaptation.adaptation_method == "dua":
+                    assert n_agents == 1
+                    agent, mom_pre, decay_factor, min_mom = self._adapt(agent, 
+                                                                        mom_pre, 
+                                                                        decay_factor, 
+                                                                        min_mom) # BatchNorm.train() to update running statistics
+                    _ = agent.actor_critic.act(
+                                                batch,
+                                                test_recurrent_hidden_states,
+                                                prev_actions,
+                                                not_done_masks,
+                                                deterministic=False,
+                                                **space_lengths,
+                                            ) # dummy feedforward to pdate running statistics
+                    agent.eval() # BatchNorm.eval() to use running statistics in normalization
+                    if self.count == 0:
+                        print("Apply DUA")
+
                 action_data = agent.actor_critic.act(
                     batch,
                     test_recurrent_hidden_states,
@@ -254,6 +282,15 @@ class HabitatEvaluator(Evaluator):
                     else:
                         print("Motion blur images error with shape", temp.shape)
 
+            else:
+                if apply_recon:
+                    for i in range(len(observations)):
+                        temp = self.ae_recon.recon(observations[i]["rgb"])
+                        observations[i]["rgb"] = temp
+                        
+
+            if "vit" in config.habitat_baselines.rl.ddppo.backbone: # Check image size for ViT
+                observations = check_size_for_vit(observations, 224)
             batch = batch_obs(  # type: ignore
                 observations,
                 device=device,
@@ -311,7 +348,7 @@ class HabitatEvaluator(Evaluator):
                         rgb_frames[i].append(frame)
                     
                 # Collect Dataset: Temporary Code for crearing an image dataset)
-                if self.count < 10:
+                if self.count < 200:
                     frame = observations_to_image(
                         {k: v[i] for k, v in batch.items()}, disp_info
                     )
@@ -337,9 +374,6 @@ class HabitatEvaluator(Evaluator):
                     extracted_infos = extract_scalars_from_info(infos[i])
                     for k, v in extracted_infos.items():
                         writer.add_scalar(f"eval_by_episode_metrics/{k}", v, len(stats_episodes))
-                    # print(f"{episode_id} done")
-                    # if self.my_benchmark != None:
-                    #     self.my_benchmark.reset()
 
                     pbar.update()
                     episode_stats = {
@@ -455,3 +489,13 @@ class HabitatEvaluator(Evaluator):
                 m.momentum = mom_new + min_momentum_constant
         mom_pre = mom_new
         return agent, mom_pre, decay_factor, min_mom
+
+
+# For 256 x 256 reconstructed images, they have to be resize to 224 x 224 for ViT models
+def check_size_for_vit(observations, proper_im_size):
+    for i in range(len(observations)):
+        if observations[i]["rgb"].shape[1] != proper_im_size:
+            observations[i]["rgb"] = cv2.resize(observations[i]["rgb"], 
+                                                dsize=(proper_im_size, proper_im_size), 
+                                                interpolation = cv2.INTER_LINEAR)
+    return observations
