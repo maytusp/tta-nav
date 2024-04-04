@@ -10,7 +10,7 @@ class apply_ae():
         self.dec_channel_config_str = "256:64,128:64,64:64,32:128,16:128,8:256,4:512,1:512"
         self.model = AE(input_res=256, dec_block_str=self.dec_block_config_str, dec_channel_str=self.dec_channel_config_str)
         
-        self.state_dict = torch.load('/mnt/iusers01/fatpou01/compsci01/n70579mp/habitat-lab/data/autoencoder/ae_3rd_encoder.pt')
+        self.state_dict = torch.load('ae_gibson.pt')
         self.model.load_state_dict(self.state_dict)
         self.model.to(device)
         self.model.eval()
